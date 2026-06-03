@@ -46,6 +46,17 @@ export const BASE_UNIT: Record<Dimension, string> = {
   count: "item",
 };
 
+/**
+ * The unit we prefer to SHOW prices/stock in (larger, human-friendly), as
+ * opposed to the base unit used for storage.
+ *   weight -> kg, volume -> L, count -> item
+ */
+export const PREFERRED_DISPLAY_UNIT: Record<Dimension, string> = {
+  weight: "kg",
+  volume: "L",
+  count: "item",
+};
+
 /** Master catalogue of supported units. Seeded into the `units` table. */
 export const UNITS: UnitDef[] = [
   { code: "g", label: "Grams (g)", dimension: "weight", factorToBase: "1" },
