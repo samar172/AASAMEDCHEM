@@ -8,6 +8,13 @@
       "when": 1780461324451,
       "tag": "0000_messy_guardsmen",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1780465202954,
+      "tag": "0001_chubby_loa",
+      "breakpoints": true
     }
   ]
 }

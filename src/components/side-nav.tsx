@@ -9,7 +9,12 @@ export default function SideNav({ links }: { links: NavLink[] }) {
   return (
     <ul className="space-y-1">
       {links.map((l) => {
-        const isActive = pathname === l.href || pathname.startsWith(l.href + "/");
+        // Section-root links (e.g. /admin, /seller) match exactly; deeper links
+        // also match their sub-routes (e.g. /admin/orders/:id).
+        const isRoot = l.href.split("/").filter(Boolean).length === 1;
+        const isActive =
+          pathname === l.href ||
+          (!isRoot && pathname.startsWith(l.href + "/"));
         return (
           <li key={l.href}>
             <Link

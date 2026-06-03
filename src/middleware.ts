@@ -41,7 +41,7 @@ export async function middleware(req: NextRequest) {
 }
 
 function homeFor(role: "admin" | "seller"): string {
-  return role === "admin" ? "/admin/products" : "/seller/products";
+  return role === "admin" ? "/admin" : "/seller";
 }
 
 export const config = {

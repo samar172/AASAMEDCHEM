@@ -14,7 +14,7 @@ export default async function SellerLayout({
 }) {
   const session = await getSession();
   if (!session) redirect("/login");
-  if (session.role !== "seller") redirect("/admin/products");
+  if (session.role !== "seller") redirect("/admin");
 
   return (
     <Shell session={session} links={LINKS}>

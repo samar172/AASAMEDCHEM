@@ -97,6 +97,8 @@ export const products = pgTable("products", {
   basePrice: numeric("base_price", RATE).notNull(),
   /** Current stock level, stored in base units. */
   stockBaseQty: numeric("stock_base_qty", QTY).notNull().default("0"),
+  /** Low-stock alert threshold, in base units. */
+  lowStockThreshold: numeric("low_stock_threshold", QTY).notNull().default("0"),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -140,6 +142,23 @@ export const orderItems = pgTable("order_items", {
   productSku: text("product_sku").notNull(),
 });
 
+/**
+ * Append-only log of an order's status transitions. Powers the order timeline
+ * and captures who changed it and an optional note.
+ */
+export const orderStatusHistory = pgTable("order_status_history", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  orderId: uuid("order_id")
+    .notNull()
+    .references(() => orders.id, { onDelete: "cascade" }),
+  status: orderStatusEnum("status").notNull(),
+  note: text("note"),
+  changedBy: uuid("changed_by").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 /* ---------------------------------------------------------------------------
  * Relations
  * ------------------------------------------------------------------------- */
@@ -166,7 +185,22 @@ export const productsRelations = relations(products, ({ one }) => ({
 export const ordersRelations = relations(orders, ({ one, many }) => ({
   user: one(users, { fields: [orders.userId], references: [users.id] }),
   items: many(orderItems),
+  statusHistory: many(orderStatusHistory),
 }));
+
+export const orderStatusHistoryRelations = relations(
+  orderStatusHistory,
+  ({ one }) => ({
+    order: one(orders, {
+      fields: [orderStatusHistory.orderId],
+      references: [orders.id],
+    }),
+    changedByUser: one(users, {
+      fields: [orderStatusHistory.changedBy],
+      references: [users.id],
+    }),
+  })
+);
 
 export const orderItemsRelations = relations(orderItems, ({ one }) => ({
   order: one(orders, { fields: [orderItems.orderId], references: [orders.id] }),
@@ -188,3 +222,4 @@ export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;
 export type Order = typeof orders.$inferSelect;
 export type OrderItem = typeof orderItems.$inferSelect;
+export type OrderStatusHistory = typeof orderStatusHistory.$inferSelect;
