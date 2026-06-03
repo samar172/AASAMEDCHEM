@@ -4,7 +4,12 @@ import { db } from "@/db";
 import { products } from "@/db/schema";
 import { getSession, requireRole } from "@/lib/auth";
 import { productInputSchema } from "@/lib/validation";
-import { BASE_UNIT, pricePerDisplayUnitToBase, toBase } from "@/lib/units";
+import {
+  BASE_UNIT,
+  pricePerDisplayUnitToBase,
+  toBase,
+  validateUnitsMatchDimension,
+} from "@/lib/units";
 
 /** GET /api/products?q=&dimension=&categoryId=&activeOnly=1 */
 export async function GET(req: Request) {
@@ -66,6 +71,10 @@ export async function POST(req: Request) {
     input.priceUnit
   ).toString();
   const stockBaseQty = toBase(input.stockQty, input.stockUnit).toString();
+  const lowStockThreshold = toBase(
+    input.lowStockThreshold ?? "0",
+    input.stockUnit
+  ).toString();
 
   try {
     const [created] = await db
@@ -79,6 +88,7 @@ export async function POST(req: Request) {
         baseUnit: BASE_UNIT[input.dimension],
         basePrice,
         stockBaseQty,
+        lowStockThreshold,
         isActive: input.isActive ?? true,
       })
       .returning();
@@ -89,25 +99,6 @@ export async function POST(req: Request) {
     }
     throw err;
   }
-}
-
-/** The chosen price/stock units must belong to the product's dimension. */
-export function validateUnitsMatchDimension(input: {
-  dimension: "weight" | "volume" | "count";
-  priceUnit: string;
-  stockUnit: string;
-}): string | null {
-  const dims: Record<string, string[]> = {
-    weight: ["g", "kg"],
-    volume: ["mL", "L"],
-    count: ["item"],
-  };
-  const allowed = dims[input.dimension];
-  if (!allowed.includes(input.priceUnit))
-    return `Price unit must be one of: ${allowed.join(", ")}`;
-  if (!allowed.includes(input.stockUnit))
-    return `Stock unit must be one of: ${allowed.join(", ")}`;
-  return null;
 }
 
 function isUniqueViolation(err: unknown): boolean {

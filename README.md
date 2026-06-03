@@ -28,16 +28,19 @@ volume, count), **unit-aware INR pricing**, role-based access for **Admin** and
 ## Features
 
 **Admin**
-- Create / update / delete products; configure dimension, **base unit**, **base price**, and stock.
+- **Analytics dashboard**: KPIs (realised revenue, orders, open quotations, low-stock count, inventory value, avg order value, products, sellers) + charts (revenue-over-time, orders-by-status, top products, revenue-by-category) + low-stock alerts and a recent-orders feed.
+- Create / update / delete products; configure dimension, **base unit**, **base price**, stock, and a per-product **low-stock threshold**.
 - Inventory view with friendly-unit stock levels, low-stock flags, and total stock value.
 - Review incoming quotations/orders with a **per-line conversion breakdown** (ordered qty → base qty → rate → line total) so pricing is auditable.
+- **Order detail pages** with a **status-history timeline** and the ability to change status with a note.
 - Update order status; confirming an order **deducts stock** (idempotently, in a transaction).
 
 **Seller (the buyer who places orders)**
+- **Dashboard**: spend / orders / open-quotation KPIs + my-spend-over-time and status charts.
 - Browse / search / filter products (by text, dimension, category).
-- Enter quantity in **any supported unit** and see the **live INR price** instantly.
+- Enter quantity in **any supported unit** and see the **live INR price** instantly; **stock-aware warnings** when a quantity exceeds availability.
 - Build a quotation/order cart with editable lines and a running total.
-- Track personal orders and their status.
+- Track personal orders with a status timeline; **reorder** any past order in one click (re-priced from current products).
 
 **Cross-cutting**
 - JWT cookie auth + bcrypt password hashing; role-based route guards via middleware.
@@ -58,6 +61,7 @@ volume, count), **unit-aware INR pricing**, role-based access for **Admin** and
 | Money math | `decimal.js` | Avoids JavaScript floating-point error in financial calculations. |
 | Validation | `zod` | Schema validation for all API inputs. |
 | UI | Tailwind CSS | Fast, consistent, responsive admin/seller panels. |
+| Charts | Recharts | Dashboard analytics (revenue, status, top products). |
 
 ### How the pieces interact
 
@@ -229,6 +233,7 @@ Source of truth: [`src/db/schema.ts`](src/db/schema.ts). Generated SQL lives in
 | base_unit | `text` FK → units.code | derived from dimension |
 | base_price | `NUMERIC(20,6)` | **INR per base unit** |
 | stock_base_qty | `NUMERIC(20,6)` | stock in **base units** |
+| low_stock_threshold | `NUMERIC(20,6)` | low-stock alert level in base units (0 = off) |
 | is_active | `boolean` | sellers see active only |
 | created_at / updated_at | `timestamptz` | |
 
@@ -256,8 +261,19 @@ Source of truth: [`src/db/schema.ts`](src/db/schema.ts). Generated SQL lives in
 | line_total | `NUMERIC(20,2)` | base_qty × unit_price_base |
 | product_name / product_sku | `text` | display snapshots |
 
+### `order_status_history`
+| Column | Type | Notes |
+|---|---|---|
+| id | `uuid` PK | |
+| order_id | `uuid` FK → orders | `on delete cascade` |
+| status | `enum` | the status set at this step |
+| note | `text` null | optional note (admin or system) |
+| changed_by | `uuid` FK → users | `on delete set null` |
+| created_at | `timestamptz` | |
+
 > **Why snapshots?** `order_items` records the price/name **at order time**, so a
-> later admin price edit never rewrites historical orders.
+> later admin price edit never rewrites historical orders. `order_status_history`
+> is an append-only audit trail powering the order timeline.
 
 ---
 
@@ -349,21 +365,28 @@ npm run dev             # http://localhost:3000
 | **Admin** | `admin@aasamed.com` | `Admin@123` |
 | **Seller (buyer)** | `seller@aasamed.com` | `Seller@123` |
 
+> The seed also creates 3 more sellers (`labpro@`, `medico@`, `research@aasamed.com`, same password) so the admin dashboard shows realistic multi-seller analytics.
+
 ### Admin panel (`/admin`)
+- **Dashboard** — KPIs and charts (revenue over time, orders by status, top products, revenue by category), low-stock alerts, recent orders.
 - **Products** — add/edit/delete. Pick a *dimension*; enter the price **per a
   unit you choose** (e.g. ₹850 per kg) and stock in any unit — both are
   normalised to base units on save.
 - **Inventory** — current stock in friendly units, low-stock flags, total value.
-- **Orders** — every quotation/order with a full conversion breakdown. Change
-  **status**; setting it to **confirmed** deducts stock.
+- **Orders** — every quotation/order with a full conversion breakdown. Open one
+  to see its **timeline** and change **status** (with a note); setting it to
+  **confirmed** deducts stock.
 
 ### Seller panel (`/seller`)
+- **Dashboard** — your spend/orders KPIs and charts.
 - **Browse** — search by name/SKU, filter by dimension/category. For each
   product, choose a **unit**, type a **quantity**, and watch the **INR line
-  price** update live. Click **Add** to put it in the cart.
+  price** update live (with a warning if it exceeds stock). Click **Add** to put
+  it in the cart.
 - The cart shows editable lines and a grand total. Choose **Quotation** or
   **Order**, add an optional note, and **place** it.
-- **My Orders** — your submissions and their current status.
+- **My Orders** — your submissions, each with a status timeline and a one-click
+  **Reorder**.
 
 ### Try the conversion flow
 1. Log in as **seller**, add **1.5 kg** Sodium Chloride and **2 L** Acetone, place an order.

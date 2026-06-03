@@ -35,6 +35,8 @@ export const productInputSchema = z.object({
   /** Stock entered in stockUnit, converted to base on save. */
   stockQty: decimalString,
   stockUnit: z.enum(unitCodes),
+  /** Low-stock alert threshold, entered in stockUnit (0 disables the alert). */
+  lowStockThreshold: decimalString.optional().default("0"),
   isActive: z.boolean().optional().default(true),
 });
 

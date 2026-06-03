@@ -22,6 +22,7 @@ interface ProductRow {
   baseUnit: string;
   basePrice: string;
   stockBaseQty: string;
+  lowStockThreshold: string;
   isActive: boolean;
   category: { id: string; name: string } | null;
 }
@@ -41,6 +42,7 @@ type FormState = {
   priceUnit: string;
   stockQty: string;
   stockUnit: string;
+  lowStockThreshold: string;
   isActive: boolean;
 };
 
@@ -54,6 +56,7 @@ const EMPTY_FORM: FormState = {
   priceUnit: "kg",
   stockQty: "",
   stockUnit: "kg",
+  lowStockThreshold: "0",
   isActive: true,
 };
 
@@ -232,6 +235,7 @@ function toFormState(product: ProductRow | null): FormState {
     priceUnit: dispUnit,
     stockQty: fromBase(product.stockBaseQty, dispUnit).toString(),
     stockUnit: dispUnit,
+    lowStockThreshold: fromBase(product.lowStockThreshold, dispUnit).toString(),
     isActive: product.isActive,
   };
 }
@@ -423,6 +427,20 @@ function ProductForm({
                 ))}
               </select>
             </div>
+          </div>
+
+          <div>
+            <label className="label">
+              Low-stock alert threshold (in {form.stockUnit}, 0 = off)
+            </label>
+            <input
+              className="input"
+              inputMode="decimal"
+              value={form.lowStockThreshold}
+              onChange={(e) =>
+                setForm({ ...form, lowStockThreshold: e.target.value })
+              }
+            />
           </div>
 
           <label className="flex items-center gap-2 text-sm text-slate-700">

@@ -4,8 +4,12 @@ import { db } from "@/db";
 import { products } from "@/db/schema";
 import { requireRole } from "@/lib/auth";
 import { productInputSchema } from "@/lib/validation";
-import { BASE_UNIT, pricePerDisplayUnitToBase, toBase } from "@/lib/units";
-import { validateUnitsMatchDimension } from "../route";
+import {
+  BASE_UNIT,
+  pricePerDisplayUnitToBase,
+  toBase,
+  validateUnitsMatchDimension,
+} from "@/lib/units";
 
 /** PATCH /api/products/:id (admin) — update a product. */
 export async function PATCH(
@@ -45,6 +49,10 @@ export async function PATCH(
         input.priceUnit
       ).toString(),
       stockBaseQty: toBase(input.stockQty, input.stockUnit).toString(),
+      lowStockThreshold: toBase(
+        input.lowStockThreshold ?? "0",
+        input.stockUnit
+      ).toString(),
       isActive: input.isActive ?? true,
       updatedAt: new Date(),
     })

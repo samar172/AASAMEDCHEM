@@ -79,6 +79,23 @@ export function unitsForDimension(dimension: Dimension): UnitDef[] {
   return UNITS.filter((u) => u.dimension === dimension);
 }
 
+/**
+ * Validate that the chosen price/stock units belong to a product's dimension.
+ * Returns an error message, or null if valid.
+ */
+export function validateUnitsMatchDimension(input: {
+  dimension: Dimension;
+  priceUnit: string;
+  stockUnit: string;
+}): string | null {
+  const allowed = unitsForDimension(input.dimension).map((u) => u.code);
+  if (!allowed.includes(input.priceUnit))
+    return `Price unit must be one of: ${allowed.join(", ")}`;
+  if (!allowed.includes(input.stockUnit))
+    return `Stock unit must be one of: ${allowed.join(", ")}`;
+  return null;
+}
+
 /** Convert a quantity from `unitCode` into the dimension's base unit. */
 export function toBase(qty: Decimal.Value, unitCode: string): Decimal {
   const unit = getUnit(unitCode);
