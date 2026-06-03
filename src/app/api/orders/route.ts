@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { desc, eq, inArray } from "drizzle-orm";
 import { Decimal } from "decimal.js";
 import { db } from "@/db";
-import { orders, orderItems, products } from "@/db/schema";
+import { orders, orderItems, products, orderStatusHistory } from "@/db/schema";
 import { getSession } from "@/lib/auth";
 import { orderInputSchema } from "@/lib/validation";
 import { calcLineTotal, getUnit } from "@/lib/units";
@@ -112,6 +112,14 @@ export async function POST(req: Request) {
     await tx
       .insert(orderItems)
       .values(computed.map((c) => ({ ...c, orderId: order.id })));
+
+    // Seed the status timeline with the initial "pending" entry.
+    await tx.insert(orderStatusHistory).values({
+      orderId: order.id,
+      status: "pending",
+      note: "Order placed.",
+      changedBy: session.sub,
+    });
 
     return order;
   });

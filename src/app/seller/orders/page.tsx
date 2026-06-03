@@ -31,7 +31,7 @@ export default async function SellerOrdersPage() {
           </div>
         ) : (
           serialised.map((o: Parameters<typeof OrderCard>[0]["order"]) => (
-            <OrderCard key={o.id} order={o} />
+            <OrderCard key={o.id} order={o} href={`/seller/orders/${o.id}`} />
           ))
         )}
       </div>

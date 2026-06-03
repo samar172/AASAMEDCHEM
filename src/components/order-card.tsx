@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { formatINR, formatQty } from "@/lib/units";
 import StatusBadge from "./status-badge";
 
@@ -31,9 +32,11 @@ export interface OrderView {
 export default function OrderCard({
   order,
   actions,
+  href,
 }: {
   order: OrderView;
   actions?: React.ReactNode;
+  href?: string;
 }) {
   return (
     <div className="card p-5">
@@ -63,6 +66,14 @@ export default function OrderCard({
           <div className="text-lg font-bold text-slate-900">
             {formatINR(order.total)}
           </div>
+          {href && (
+            <Link
+              href={href}
+              className="text-xs font-medium text-brand-600 hover:underline"
+            >
+              View details →
+            </Link>
+          )}
         </div>
       </div>
 

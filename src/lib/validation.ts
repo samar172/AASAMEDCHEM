@@ -52,6 +52,7 @@ export const orderInputSchema = z.object({
 
 export const orderStatusSchema = z.object({
   status: z.enum(["pending", "quoted", "confirmed", "rejected", "fulfilled"]),
+  note: z.string().trim().max(1000).optional().or(z.literal("")),
 });
 
 export type ProductInput = z.infer<typeof productInputSchema>;

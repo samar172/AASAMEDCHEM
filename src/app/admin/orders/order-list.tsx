@@ -60,6 +60,7 @@ export default function AdminOrderList({ orders }: { orders: OrderView[] }) {
           <OrderCard
             key={order.id}
             order={order}
+            href={`/admin/orders/${order.id}`}
             actions={
               <div className="flex items-center gap-2">
                 <label className="text-sm text-slate-500">Set status:</label>

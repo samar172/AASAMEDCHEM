@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { orders, products } from "@/db/schema";
+import { orders, products, orderStatusHistory } from "@/db/schema";
 import { requireRole } from "@/lib/auth";
 import { orderStatusSchema } from "@/lib/validation";
 
@@ -15,8 +15,9 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let session;
   try {
-    await requireRole("admin");
+    session = await requireRole("admin");
   } catch {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -28,6 +29,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
   const newStatus = parsed.data.status;
+  const note = parsed.data.note || null;
 
   const existing = await db.query.orders.findFirst({
     where: eq(orders.id, id),
@@ -55,6 +57,14 @@ export async function PATCH(
       .set({ status: newStatus, updatedAt: new Date() })
       .where(eq(orders.id, id))
       .returning();
+
+    // Append to the status timeline.
+    await tx.insert(orderStatusHistory).values({
+      orderId: id,
+      status: newStatus,
+      note,
+      changedBy: session.sub,
+    });
     return row;
   });
 
