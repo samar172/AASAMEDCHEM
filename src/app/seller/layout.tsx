@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import Shell, { type NavLink } from "@/components/shell";
 
 const LINKS: NavLink[] = [
+  { href: "/seller", label: "Dashboard" },
   { href: "/seller/products", label: "Browse" },
   { href: "/seller/orders", label: "My Orders" },
 ];

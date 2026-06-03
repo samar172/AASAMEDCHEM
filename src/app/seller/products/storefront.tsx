@@ -10,6 +10,7 @@ import {
   formatINR,
   formatQty,
   fromBase,
+  toBase,
   unitsForDimension,
   type Dimension,
 } from "@/lib/units";
@@ -329,8 +330,12 @@ function ProductCard({
   const [unit, setUnit] = useState(inCart?.unit ?? dispUnit);
 
   let preview = "—";
+  let overStock = false;
   try {
     preview = formatINR(calcLineTotal(qty || "0", unit, product.basePrice).lineTotal);
+    overStock = toBase(qty || "0", unit).greaterThan(
+      new Decimal(product.stockBaseQty)
+    );
   } catch {
     /* invalid */
   }
@@ -390,6 +395,11 @@ function ProductCard({
           {inCart ? "Update" : "Add"}
         </button>
       </div>
+      {overStock && (
+        <p className="mt-2 text-xs font-medium text-amber-600">
+          ⚠ Requested quantity exceeds available stock ({formatQty(stock, dispUnit)}).
+        </p>
+      )}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { orders, orderStatusHistory } from "@/db/schema";
 import { getSession } from "@/lib/auth";
 import OrderCard, { type OrderView } from "@/components/order-card";
 import OrderTimeline, { type TimelineEntry } from "@/components/order-timeline";
+import ReorderButton from "@/components/reorder-button";
 
 export const dynamic = "force-dynamic";
 
@@ -51,7 +52,10 @@ export default async function SellerOrderDetailPage({
       </Link>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <OrderCard order={orderView} />
+          <OrderCard
+            order={orderView}
+            actions={<ReorderButton orderId={order.id} />}
+          />
         </div>
         <div className="card p-5">
           <h2 className="mb-4 text-sm font-semibold text-slate-700">Timeline</h2>

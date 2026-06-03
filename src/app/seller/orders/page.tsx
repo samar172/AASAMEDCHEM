@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { orders as ordersTable } from "@/db/schema";
 import { getSession } from "@/lib/auth";
 import OrderCard from "@/components/order-card";
+import ReorderButton from "@/components/reorder-button";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,12 @@ export default async function SellerOrdersPage() {
           </div>
         ) : (
           serialised.map((o: Parameters<typeof OrderCard>[0]["order"]) => (
-            <OrderCard key={o.id} order={o} href={`/seller/orders/${o.id}`} />
+            <OrderCard
+              key={o.id}
+              order={o}
+              href={`/seller/orders/${o.id}`}
+              actions={<ReorderButton orderId={o.id} />}
+            />
           ))
         )}
       </div>
